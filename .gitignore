@@ -23,3 +23,6 @@ __pycache__/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Release 用的源码包，只做资产不占 git 历史
+dist/*-src.tar.gz
