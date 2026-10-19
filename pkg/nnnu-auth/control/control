@@ -1,0 +1,14 @@
+Package: nnnu-auth
+Version: 1.2.3-1
+Depends: libc
+Source: package/nnnu-auth
+SourceName: nnnu-auth
+License: MIT
+Section: net
+Architecture: all
+Installed-Size: 40
+Description: 校园网门户自动认证 (nnnu 武鸣校区 / ZAXSOFT BOSS Web)
+ 针对 nnnu 武鸣校区校园网门户 (172.27.0.5, ZAXSOFT BOSS Web) 的自动认证脚本:
+ 探测被网关劫持的 HTTP 请求取得门户参数、提交登录表单、等待运营商代拨结果、
+ 校验连通性, 掉线自动重连。
+ 装完在 LuCI 的「服务 → 校园网认证」里填学号密码即可。

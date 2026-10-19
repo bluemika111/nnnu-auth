@@ -1,0 +1,5 @@
+#!/bin/sh
+# 安装/升级后清掉 LuCI 的菜单与模块缓存, 让新菜单立刻出现
+rm -f /tmp/luci-indexcache 2>/dev/null
+rm -rf /tmp/luci-modulecache 2>/dev/null
+exit 0

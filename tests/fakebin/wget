@@ -1,0 +1,50 @@
+#!/bin/sh
+# 假 wget: 复刻 busybox wget 的参数与 -S 输出格式, 内部转调 curl。
+# 用途: 验证 nnnu-auth.sh 在"没有 curl, 只有 busybox wget"时的整条链路。
+# busybox wget 的 -S 会把响应头打到 stderr, 状态行带两个前导空格; 且默认不跟随 302。
+
+UA="Wget"
+OUT=""
+POST=""
+HDRS=""
+TIMEOUT=""
+URL=""
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -q) ;;
+        -S) ;;
+        -T) TIMEOUT="$2"; shift ;;
+        -U) UA="$2"; shift ;;
+        -O) OUT="$2"; shift ;;
+        --header=*) HDRS="$HDRS
+$(printf '%s' "$1" | sed 's/^--header=//')" ;;
+        --post-data=*) POST="$(printf '%s' "$1" | sed 's/^--post-data=//')" ;;
+        -*) ;;
+        *) URL="$1" ;;
+    esac
+    shift
+done
+
+TMPH=$(mktemp)
+set -- -s -m "${TIMEOUT:-30}" -A "$UA" -D "$TMPH"
+[ -n "$POST" ] && set -- "$@" --data "$POST"
+# --header 里的多行转成多个 -H
+OLDIFS=$IFS; IFS='
+'
+for h in $HDRS; do
+    [ -n "$h" ] && set -- "$@" -H "$h"
+done
+IFS=$OLDIFS
+if [ -n "$OUT" ]; then
+    curl "$@" -o "$OUT" "$URL"
+else
+    curl "$@" -o /dev/null "$URL"
+fi
+RC=$?
+
+# 按 busybox 风格把响应头打到 stderr
+awk 'NR==1 { printf("Connecting to server\n  %s %s %s\n", $1, $2, $3); next }
+     { sub(/\r$/, ""); printf("  %s\n", $0) }' "$TMPH" >&2
+rm -f "$TMPH"
+exit $RC

@@ -1,0 +1,25 @@
+# 本机的敏感清单（含真实账号密码），绝不入库
+tools/known-secrets.txt
+
+# 从抓包提取的真实门户页面（校方页面 + 真实 MAC/IP），只留在本机做回归测试
+tests/fixtures/*.local.html
+tests/fixtures/*.html
+
+# 原始抓包与导出物
+*.har
+out/
+out-real.ipk
+probe/
+
+# 构建/运行产物
+__pycache__/
+*.pyc
+*.pyo
+.tmp-*/
+*.log
+
+# 编辑器/系统
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

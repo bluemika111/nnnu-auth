@@ -1,0 +1,9 @@
+#!/bin/sh
+[ -n "${IPKG_INSTROOT}" ] && exit 0
+
+/etc/init.d/nnnu-auth stop   2>/dev/null
+/etc/init.d/nnnu-auth disable 2>/dev/null
+sed -i '/nnnu-auth\.sh/d' /etc/crontabs/root 2>/dev/null
+/etc/init.d/cron restart 2>/dev/null
+rm -rf /tmp/nnnu-auth.lock
+exit 0

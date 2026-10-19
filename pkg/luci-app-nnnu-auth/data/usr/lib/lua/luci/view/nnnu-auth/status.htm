@@ -1,0 +1,123 @@
+<%#
+ 校园网认证 — 状态与诊断
+
+ 注意: 这里刻意不包含 header/footer 模板。JS 版 LuCI 的页面框架由前端提供,
+ luci-compat 的 luasrc/view/ 下也只有 cbi/, 没有页面级的 header/footer,
+ 引了会报模板不存在。tools/check_lua.py 会拦住这种写法。
+-%>
+<%
+local uci  = require "luci.model.uci".cursor()
+local sys  = require "luci.sys"
+local util = require "luci.util"
+local url  = luci.dispatcher.build_url
+
+local function uc(k, d)
+	local v = uci:get("nnnu-auth", "main", k)
+	if v == nil or v == "" then return d or "" end
+	return v
+end
+
+local script   = "/usr/bin/nnnu-auth.sh"
+local logfile  = uc("log_file", "/var/log/nnnu-auth.log")
+local username = uc("username")
+local enabled  = uc("enabled", "1")
+local mode     = uc("mode", "cron")
+local bindmac  = uc("bind_mac", "1")
+
+-- 在线状态: nnnu-auth.sh status 返回 0=在线 / 1=离线
+local online = false
+if username ~= "" then
+	online = (sys.call(script .. " status -q >/dev/null 2>&1") == 0)
+end
+
+local status_text, status_color
+if username == "" then
+	status_text, status_color = translate("未配置：请到「设置」里填学号与密码"), "orange"
+elseif enabled ~= "1" then
+	status_text, status_color = translate("已禁用自动认证"), "gray"
+elseif online then
+	status_text, status_color = translate("在线"), "green"
+else
+	status_text, status_color = translate("未认证 / 离线"), "red"
+end
+
+-- 从 doctor 输出里摘两行自检结果 (只取头部几行, 不做完整探测)
+local dump = "/tmp/nnnu-auth-last-response.html"
+local http_client, hextool = "", ""
+local doc = sys.exec(script .. " doctor 2>/dev/null | head -n 6")
+for line in doc:gmatch("[^\n]+") do
+	local k1, v1 = line:match("^(HTTP 客户端):%s*(.+)$")
+	if k1 then http_client = v1 end
+	local k2, v2 = line:match("^(URL 编码器) :%s*(.+)$")
+	if k2 then hextool = v2 end
+end
+
+local log = ""
+if sys.call("test -s " .. util.shellquote(logfile)) == 0 then
+	log = util.trim(sys.exec("tail -n 20 " .. util.shellquote(logfile) .. " 2>/dev/null"))
+end
+
+-- 配置体检: 帮用户(和我)一眼看出"未配置"到底是没填还是没写进去
+local cfgfile = "/etc/config/nnnu-auth"
+local confout = "/etc/nnnu-auth.conf"
+local cfg_exists  = (sys.call("test -s " .. util.shellquote(cfgfile)) == 0)
+local conf_exists = (sys.call("test -s " .. util.shellquote(confout)) == 0)
+local username_set = (username ~= "")
+local conf_has_user = (sys.call("grep -q \"^USERNAME='..'\" " ..
+	util.shellquote(confout) .. " 2>/dev/null") == 0)
+%>
+
+<h2 name="content"><%:校园网认证 — 状态与诊断%></h2>
+
+<div class="cbi-section">
+	<h3><%:当前状态%></h3>
+	<table class="table">
+		<tr><td width="32%"><%:状态%></td><td>
+			<strong style="color:<%=status_color%>"><%=status_text%></strong>
+			<% if not username_set then %>
+				<a class="btn cbi-button cbi-button-apply" style="margin-left:8px" href="<%=url('admin/services/nnnu-auth/settings')%>"><%:去填写%></a>
+			<% end %>
+		</td></tr>
+		<tr><td><%:账号%></td><td>
+			<%=util.pcdata(username_set and username or translate("未配置"))%>
+		</td></tr>
+		<tr><td><%:运行方式%></td><td>
+			<% if mode == "service" then %><%:procd 常驻守护%><% else %><%:cron 每分钟检查%><% end %>
+		</td></tr>
+		<tr><td><%:绑定 MAC%></td><td><%=bindmac == "1" and translate("是") or translate("否")%></td></tr>
+		<tr><td><%:HTTP 客户端%></td><td><%=util.pcdata(http_client ~= "" and http_client or "?")%></td></tr>
+		<tr><td><%:URL 编码器%></td><td><%=util.pcdata(hextool ~= "" and hextool or "?")%></td></tr>
+		<tr><td><%:日志文件%></td><td><%=util.pcdata(logfile)%></td></tr>
+		<tr><td><%:配置文件%></td><td>
+			<code><%=cfgfile%></code>
+			<%=cfg_exists and translate("已存在") or translate("不存在")%> ·
+			<code><%=confout%></code>
+			<%=conf_exists and translate("已生成") or translate("未生成")%>
+			<% if conf_exists and not conf_has_user then %>（<%:账号还空着%>）<% end %>
+		</td></tr>
+	</table>
+</div>
+
+<div class="cbi-section">
+	<h3><%:操作%></h3>
+	<p>
+		<a class="btn cbi-button cbi-button-apply" href="<%=url('admin/services/nnnu-auth/action/login')%>"><%:立即认证%></a>
+		<a class="btn cbi-button" href="<%=url('admin/services/nnnu-auth/action/ensure')%>"><%:检查并补认证%></a>
+		<a class="btn cbi-button" href="<%=url('admin/services/nnnu-auth/action/doctor')%>"><%:诊断%></a>
+		<a class="btn cbi-button cbi-button-reset" href="<%=url('admin/services/nnnu-auth/action/logout')%>"><%:注销下线%></a>
+		<a class="btn cbi-button" href="<%=url('admin/services/nnnu-auth/settings')%>"><%:去设置%></a>
+	</p>
+	<p class="cbi-section-descr"><%:「诊断」会探测网络，可能需要十几秒。%></p>
+</div>
+
+<div class="cbi-section">
+	<h3><%:最近日志%></h3>
+	<% if log ~= "" then %>
+		<pre style="white-space:pre-wrap;word-break:break-all;background:rgba(127,127,127,.12);padding:10px;border-radius:4px;max-height:420px;overflow:auto"><%=util.pcdata(log)%></pre>
+	<% else %>
+		<p><%:暂无日志（还没跑过认证，或日志文件被清空）%></p>
+	<% end %>
+	<% if sys.call("test -s " .. util.shellquote(dump)) == 0 then %>
+		<p><%:上次失败时门户返回页已留档：%><code><%=dump%></code></p>
+	<% end %>
+</div>

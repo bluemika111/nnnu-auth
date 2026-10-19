@@ -1,0 +1,12 @@
+Package: luci-app-nnnu-auth
+Version: 1.2.3-1
+Depends: libc, nnnu-auth, luci-base, luci-compat
+Source: package/luci-app-nnnu-auth
+SourceName: luci-app-nnnu-auth
+License: MIT
+Section: luci
+Architecture: all
+Installed-Size: 20
+Description: LuCI 界面: nnnu 武鸣校区校园网认证 (nnnu-auth)
+ 给 nnnu-auth 提供 LuCI 配置页与状态页: 填学号密码、选择运行方式、
+ 查看在线状态与最近日志, 并可一键「立即认证 / 诊断 / 注销下线」。

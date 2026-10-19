@@ -1,0 +1,20 @@
+#!/bin/sh
+#===============================================================================
+#  /etc/hotplug.d/iface/99-nnnu-auth
+#  WAN 每次 up / 地址变更后立刻认证一次(比等下一轮定时检查更快)
+#===============================================================================
+[ -x /usr/bin/nnnu-auth.sh ] || exit 0
+[ -r /etc/nnnu-auth.conf ] || exit 0
+
+case "$ACTION" in
+    ifup|ifupdate) ;;
+    *) exit 0 ;;
+esac
+
+WANT="$(uci -q get nnnu-auth.main.wan_iface 2>/dev/null)"
+[ -n "$WANT" ] || WANT="wan"
+[ "$INTERFACE" = "$WANT" ] || exit 0
+
+# 等 DHCP/PPPoE 稳定后再认证, 后台执行不阻塞 hotplug
+( sleep 3; /usr/bin/nnnu-auth.sh ensure -q ) >/dev/null 2>&1 &
+exit 0

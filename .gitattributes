@@ -1,0 +1,23 @@
+# 统一用 LF 换行。
+# 这一点很关键: 脚本里只要混进 CRLF, 传到路由器上就会报
+#   sh: /usr/bin/nnnu-auth.sh: not found  或  \r: not found
+* text=auto eol=lf
+
+*.sh        text eol=lf
+*.init      text eol=lf
+*.hotplug   text eol=lf
+*.conf      text eol=lf
+*.md        text eol=lf
+*.lua       text eol=lf
+*.py        text eol=lf
+*.json      text eol=lf
+control     text eol=lf
+postinst    text eol=lf
+prerm       text eol=lf
+conffiles   text eol=lf
+
+# 二进制文件不做换行/文本转换
+*.ipk       binary
+*.gz        binary
+*.png       binary
+*.jpg       binary

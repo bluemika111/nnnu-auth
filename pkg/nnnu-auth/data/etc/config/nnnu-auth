@@ -1,0 +1,36 @@
+config auth 'main'
+	option enabled '1'
+	option username ''
+	option password ''
+	option mode 'cron'
+
+	option bind_mac '1'
+	option remember '1'
+
+	option probe_urls 'http://edge-http.microsoft.com/captiveportal/generate_204 http://www.gstatic.com/generate_204 http://connect.rom.miui.com/generate_204'
+	option online_codes '204'
+
+	option interval '60'
+	option dial_wait '60'
+	option dial_interval '3'
+	option verify_wait '60'
+	option verify_interval '3'
+	option timeout '8'
+	option retry '2'
+	option lock_stale '90'
+
+	option log_file '/var/log/nnnu-auth.log'
+	option resp_dump '/tmp/nnnu-auth-last-response.html'
+
+	option portal_host '172.27.0.5'
+	option wlanacname 'ZAXSOFT-BRAS-WM'
+	option wlanacip '172.27.0.100'
+	option default_url 'http://edge-http.microsoft.com/captiveportal/generate_204'
+
+	option wan_iface ''
+	option wan_mac ''
+	option wan_ip ''
+
+	option http_client 'auto'
+	option hextool ''
+	option ua ''

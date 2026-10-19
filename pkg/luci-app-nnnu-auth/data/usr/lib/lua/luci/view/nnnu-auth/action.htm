@@ -1,0 +1,51 @@
+<%#
+ 校园网认证 — 执行一次性动作并显示输出
+ (同样不引 header/footer, 原因见 status.htm 顶部的说明)
+-%>
+<%
+local sys  = require "luci.sys"
+local util = require "luci.util"
+
+-- 白名单: 只允许这几个子命令, 避免命令注入
+local cmds = {
+	login  = translate("立即认证"),
+	ensure = translate("检查并补认证"),
+	status = translate("查看在线状态"),
+	doctor = translate("诊断"),
+	logout = translate("注销下线"),
+}
+
+-- 动作来源: 优先 ?cmd=, 其次取路径最后一段 (.../action/login)
+local cmd = luci.http.formvalue("cmd") or ""
+if cmd == "" then
+	local path = luci.dispatcher.context.path
+	if path and #path > 0 then
+		cmd = path[#path]
+	end
+end
+
+local title, out, bad
+if cmds[cmd] then
+	title = cmds[cmd]
+	out = sys.exec("/usr/bin/nnnu-auth.sh " .. cmd .. " 2>&1")
+elseif cmd == "" or cmd == "action" then
+	title = translate("没有指定动作")
+	out = translate("这个页面是「状态与诊断」里按钮的落地页。请回到状态页, 用页面上的按钮执行。")
+	bad = true
+else
+	title = translate("不支持的指令")
+	out = translate("只支持: login(立即认证) / ensure(检查并补认证) / doctor(诊断) / logout(注销下线)")
+	bad = true
+end
+%>
+
+<h2 name="content"><%:执行结果%></h2>
+
+<div class="cbi-section">
+	<h3><%=title%><% if not bad and cmd ~= "" then %> <code>nnnu-auth.sh <%=util.pcdata(cmd)%></code><% end %></h3>
+	<pre style="white-space:pre-wrap;word-break:break-all;background:rgba(127,127,127,.12);padding:10px;border-radius:4px"><%=util.pcdata(out ~= "" and out or translate("（无输出）"))%></pre>
+	<p>
+		<a class="btn cbi-button cbi-button-apply" href="<%=luci.dispatcher.build_url('admin/services/nnnu-auth/status')%>"><%:返回状态页%></a>
+		<a class="btn cbi-button" href="<%=luci.dispatcher.build_url('admin/services/nnnu-auth/settings')%>"><%:去设置%></a>
+	</p>
+</div>

@@ -1,0 +1,25 @@
+#!/bin/sh
+#===============================================================================
+#  /etc/uci-defaults/95-nnnu-auth
+#  首次安装时把已有的手写 /etc/nnnu-auth.conf 里的账号密码搬进 uci,
+#  之后 uci 就是唯一权威来源, 这个脚本不会再改任何东西。
+#===============================================================================
+[ -n "$(uci -q get nnnu-auth.main.username 2>/dev/null)" ] && exit 0
+
+CONF=/etc/nnnu-auth.conf
+[ -f "$CONF" ] || exit 0
+
+# conf 是我们自己的 shell 片段, 直接 source 取值
+(
+    . "$CONF" 2>/dev/null
+    [ -n "$USERNAME" ] && uci -q set nnnu-auth.main.username="$USERNAME"
+    [ -n "$PASSWORD" ] && uci -q set nnnu-auth.main.password="$PASSWORD"
+    [ -n "$BIND_MAC" ] && uci -q set nnnu-auth.main.bind_mac="$BIND_MAC"
+    [ -n "$REMEMBER" ] && uci -q set nnnu-auth.main.remember="$REMEMBER"
+    [ -n "$INTERVAL" ] && uci -q set nnnu-auth.main.interval="$INTERVAL"
+    [ -n "$LOG_FILE" ] && uci -q set nnnu-auth.main.log_file="$LOG_FILE"
+    exit 0
+)
+
+uci -q commit nnnu-auth
+exit 0

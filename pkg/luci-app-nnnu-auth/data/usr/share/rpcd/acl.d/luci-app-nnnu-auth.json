@@ -1,0 +1,20 @@
+{
+	"luci-app-nnnu-auth": {
+		"description": "Grant access to nnnu-auth configuration and status",
+		"read": {
+			"uci": [ "nnnu-auth" ],
+			"file": {
+				"/etc/nnnu-auth.conf": [ "read" ],
+				"/var/log/nnnu-auth.log": [ "read" ],
+				"/tmp/nnnu-auth-last-response.html": [ "read" ]
+			}
+		},
+		"write": {
+			"uci": [ "nnnu-auth" ],
+			"file": {
+				"/etc/config/nnnu-auth": [ "write" ],
+				"/etc/nnnu-auth.conf": [ "write" ]
+			}
+		}
+	}
+}

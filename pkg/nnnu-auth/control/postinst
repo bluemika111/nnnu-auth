@@ -1,0 +1,11 @@
+#!/bin/sh
+[ -n "${IPKG_INSTROOT}" ] && exit 0
+
+# 把老的手写 /etc/nnnu-auth.conf 里的账号密码搬进 uci (只在 uci 为空时执行)
+[ -x /etc/uci-defaults/95-nnnu-auth ] && /etc/uci-defaults/95-nnnu-auth
+
+# 渲染配置 + 按 uci 决定 cron / procd
+[ -x /usr/share/nnnu-auth/apply.sh ] && /usr/share/nnnu-auth/apply.sh
+
+logger -t nnnu-auth "已安装, 可在 LuCI「服务 → 校园网认证」里配置" 2>/dev/null
+exit 0
